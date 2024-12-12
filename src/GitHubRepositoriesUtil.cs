@@ -96,11 +96,32 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
     public async ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) auto merge allow...", name);
+
         var update = new RepositoryUpdate
         {
             AllowAutoMerge = true
         };
 
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
+    }
+
+    public async ValueTask AllowAutoMergeOnAllRepos(string owner, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, cancellationToken).NoSync();
+
+        if (repositories.IsNullOrEmpty())
+            return;
+
+        foreach (Repository repo in repositories)
+        {
+            try
+            {
+                await AllowAutoMerge(owner, repo.Name, cancellationToken).NoSync();
+            }
+            catch
+            {
+            }
+        }
     }
 }

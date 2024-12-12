@@ -72,4 +72,6 @@ public interface IGitHubRepositoriesUtil
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
     ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default);
+
+    ValueTask AllowAutoMergeOnAllRepos(string owner, CancellationToken cancellationToken = default);
 }
