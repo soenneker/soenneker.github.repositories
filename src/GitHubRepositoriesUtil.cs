@@ -10,7 +10,6 @@ using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.Client.Abstract;
 using Soenneker.Extensions.String;
-using System.Linq;
 
 namespace Soenneker.GitHub.Repositories;
 
@@ -94,18 +93,5 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         };
 
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
-    }
-
-    public async ValueTask<bool> HasFailedBuild(Repository repository, PullRequest pullRequest, CancellationToken cancellationToken = default)
-    {
-        return await HasFailedBuild(repository.Owner.Login, repository.Name, pullRequest, cancellationToken).NoSync();
-    }
-
-    public async ValueTask<bool> HasFailedBuild(string owner, string name, PullRequest pullRequest, CancellationToken cancellationToken = default)
-    {
-        GitHubClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-
-        CheckRunsResponse? checkRuns = await client.Check.Run.GetAllForReference(owner, name, pullRequest.Head.Sha).NoSync();
-        return checkRuns.CheckRuns.Any(cr => cr.Conclusion == CheckConclusion.Failure);
     }
 }
