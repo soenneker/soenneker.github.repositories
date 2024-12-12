@@ -10,6 +10,8 @@ namespace Soenneker.GitHub.Repositories.Abstract;
 /// </summary>
 public interface IGitHubRepositoriesUtil
 {
+    ValueTask<Repository?> Create(NewRepository repository, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Retrieves a GitHub repository by its owner and name.
     /// </summary>

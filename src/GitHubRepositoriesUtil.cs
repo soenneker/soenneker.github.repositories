@@ -25,6 +25,15 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         _gitHubClientUtil = gitHubClientUtil;
     }
 
+    public async ValueTask<Repository?> Create(NewRepository repository, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Creating GitHub repository ({name})...", repository.Name);
+
+        Repository? result = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Create(repository).NoSync();
+
+        return result;
+    }
+
     public async ValueTask<Repository?> GetByName(string owner, string name, CancellationToken cancellationToken = default)
     {
         try
