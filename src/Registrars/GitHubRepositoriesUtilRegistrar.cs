@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Soenneker.GitHub.Client.Registrars;
 using Soenneker.GitHub.Repositories.Abstract;
-using Soenneker.GitHub.Repositories.PullRequests.Registrars;
 
 namespace Soenneker.GitHub.Repositories.Registrars;
 
@@ -13,18 +13,20 @@ public static class GitHubRepositoriesUtilRegistrar
     /// <summary>
     /// Adds <see cref="IGitHubRepositoriesUtil"/> as a singleton service. <para/>
     /// </summary>
-    public static void AddGitHubRepositoriesUtilAsSingleton(this IServiceCollection services)
+    public static IServiceCollection AddGitHubRepositoriesUtilAsSingleton(this IServiceCollection services)
     {
-        services.AddGitHubRepositoriesPullRequestsUtilAsSingleton();
+        services.AddGitHubClientUtilAsSingleton();
         services.TryAddSingleton<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
+
+        return services;
     }
 
     /// <summary>
     /// Adds <see cref="IGitHubRepositoriesUtil"/> as a scoped service. <para/>
     /// </summary>
-    public static void AddGitHubRepositoriesUtilAsScoped(this IServiceCollection services)
+    public static IServiceCollection AddGitHubRepositoriesUtilAsScoped(this IServiceCollection services)
     {
-        services.AddGitHubRepositoriesPullRequestsUtilAsScoped();
+        services.AddGitHubClientUtilAsSingleton();
         services.TryAddScoped<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
     }
 }

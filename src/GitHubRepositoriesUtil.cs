@@ -11,7 +11,6 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.Client.Abstract;
 using Soenneker.Extensions.String;
 using System.Linq;
-using Soenneker.GitHub.Repositories.PullRequests.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
 
@@ -19,13 +18,11 @@ namespace Soenneker.GitHub.Repositories;
 public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 {
     private readonly ILogger<GitHubRepositoriesUtil> _logger;
-    private readonly IGitHubRepositoriesPullRequestsUtil _gitHubRepositoriesPullRequestsUtil;
     private readonly IGitHubClientUtil _gitHubClientUtil;
 
-    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubRepositoriesPullRequestsUtil gitHubRepositoriesPullRequestsUtil, IGitHubClientUtil gitHubClientUtil)
+    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubClientUtil gitHubClientUtil)
     {
         _logger = logger;
-        _gitHubRepositoriesPullRequestsUtil = gitHubRepositoriesPullRequestsUtil;
         _gitHubClientUtil = gitHubClientUtil;
     }
 
@@ -99,12 +96,6 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
     }
 
-    public async ValueTask<IReadOnlyList<Repository>> GetAllWithOpenPullRequests(string username, CancellationToken cancellationToken = default)
-    {
-        IReadOnlyList<Repository> repositories = await GetAllForOwner(username, cancellationToken).NoSync();
-        return await FilterRepositoriesWithOpenPullRequests(repositories, cancellationToken).NoSync();
-    }
-
     public async ValueTask<IReadOnlyList<Repository>> GetAllWithFailedBuildsOnOpenPullRequests(string username, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<Repository> repositories = await GetAllForOwner(username, cancellationToken).NoSync();
@@ -122,24 +113,6 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         CheckRunsResponse? checkRuns = await client.Check.Run.GetAllForReference(owner, name, pullRequest.Head.Sha).NoSync();
         return checkRuns.CheckRuns.Any(cr => cr.Conclusion == CheckConclusion.Failure);
-    }
-
-    private async ValueTask<IReadOnlyList<Repository>> FilterRepositoriesWithOpenPullRequests(IReadOnlyList<Repository> repositories, CancellationToken cancellationToken)
-    {
-        var result = new List<Repository>();
-
-        foreach (Repository repository in repositories)
-        {
-            IReadOnlyList<PullRequest> pullRequests = await _gitHubRepositoriesPullRequestsUtil.GetAll(repository, cancellationToken: cancellationToken).NoSync();
-
-            if (!pullRequests.Any())
-                continue;
-
-            _logger.LogInformation("-- {repo} has {count} PRs open --", repository.Name, pullRequests.Count);
-            result.Add(repository);
-        }
-
-        return result;
     }
 
     private async ValueTask<IReadOnlyList<Repository>> FilterRepositoriesWithFailedBuilds(IReadOnlyList<Repository> repositories, CancellationToken cancellationToken)
