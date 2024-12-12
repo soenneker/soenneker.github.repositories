@@ -96,7 +96,7 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
     public async ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) auto merge allow...", name);
+        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) auto merge allow...", owner, name);
 
         var update = new RepositoryUpdate
         {
