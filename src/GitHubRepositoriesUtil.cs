@@ -96,12 +96,6 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
     }
 
-    public async ValueTask<IReadOnlyList<Repository>> GetAllWithFailedBuildsOnOpenPullRequests(string username, CancellationToken cancellationToken = default)
-    {
-        IReadOnlyList<Repository> repositories = await GetAllForOwner(username, cancellationToken).NoSync();
-        return await FilterRepositoriesWithFailedBuilds(repositories, cancellationToken).NoSync();
-    }
-
     public async ValueTask<bool> HasFailedBuild(Repository repository, PullRequest pullRequest, CancellationToken cancellationToken = default)
     {
         return await HasFailedBuild(repository.Owner.Login, repository.Name, pullRequest, cancellationToken).NoSync();
@@ -113,29 +107,5 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         CheckRunsResponse? checkRuns = await client.Check.Run.GetAllForReference(owner, name, pullRequest.Head.Sha).NoSync();
         return checkRuns.CheckRuns.Any(cr => cr.Conclusion == CheckConclusion.Failure);
-    }
-
-    private async ValueTask<IReadOnlyList<Repository>> FilterRepositoriesWithFailedBuilds(IReadOnlyList<Repository> repositories, CancellationToken cancellationToken)
-    {
-        var result = new List<Repository>();
-
-        foreach (Repository repository in repositories)
-        {
-            IReadOnlyList<PullRequest> pullRequests = await _gitHubRepositoriesPullRequestsUtil.GetAll(repository, cancellationToken: cancellationToken).NoSync();
-
-            foreach (PullRequest pr in pullRequests)
-            {
-                bool hasFailedBuild = await HasFailedBuild(repository, pr, cancellationToken).NoSync();
-
-                if (!hasFailedBuild)
-                    continue;
-
-                _logger.LogInformation("Repository ({repo}) has a PR ({title}) with a failed build", repository.FullName, pr.Title);
-                result.Add(repository);
-                break;
-            }
-        }
-
-        return result;
     }
 }
