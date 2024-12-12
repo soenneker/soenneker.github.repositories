@@ -28,5 +28,7 @@ public static class GitHubRepositoriesUtilRegistrar
     {
         services.AddGitHubClientUtilAsSingleton();
         services.TryAddScoped<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
+
+        return services;
     }
 }
