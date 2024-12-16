@@ -74,6 +74,4 @@ public interface IGitHubRepositoriesUtil
     ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default);
 
     ValueTask AllowAutoMergeOnAllRepos(string owner, CancellationToken cancellationToken = default);
-
-    ValueTask CreateReadme(string owner, string name, string commitMessage, string content, string branch, CancellationToken cancellationToken = default);
 }

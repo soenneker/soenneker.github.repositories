@@ -124,12 +124,4 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             }
         }
     }
-
-    public async ValueTask CreateReadme(string owner, string name, string commitMessage, string content, string branch, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Creating README.md for GitHub repository ({owner}/{name})...", owner, name);
-
-        await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Content.CreateFile(owner, name, "README.md",
-            new CreateFileRequest(commitMessage, content, branch)).NoSync();
-    }
 }
