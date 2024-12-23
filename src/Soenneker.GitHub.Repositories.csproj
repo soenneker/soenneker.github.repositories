@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Extensions.Enumerable.String" Version="3.0.732" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable.String" Version="3.0.733" />
         <PackageReference Include="Soenneker.GitHub.Client" Version="3.0.1857" />
     </ItemGroup>
 </Project>
