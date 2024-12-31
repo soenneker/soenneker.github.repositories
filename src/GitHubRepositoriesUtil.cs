@@ -94,19 +94,31 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         return false;
     }
 
-    public async ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default)
+    public async ValueTask ToggleAutoMerge(string owner, string name, bool enable, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) auto merge allow...", owner, name);
+        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) auto merge {enable}...", owner, name, enable);
 
         var update = new RepositoryUpdate
         {
-            AllowAutoMerge = true
+            AllowAutoMerge = enable
         };
 
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
     }
 
-    public async ValueTask AllowAutoMergeOnAllRepos(string owner, CancellationToken cancellationToken = default)
+    public async ValueTask ToggleDiscussions(string owner, string name, bool enable, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Setting GitHub repository ({owner}/{name}) discussions {enable}...", owner, name, enable);
+
+        var update = new RepositoryUpdate
+        {
+            HasDiscussions = enable
+        };
+
+        Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
+    }
+
+    public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, cancellationToken).NoSync();
 
@@ -117,7 +129,26 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         {
             try
             {
-                await AllowAutoMerge(owner, repo.Name, cancellationToken).NoSync();
+                await ToggleAutoMerge(owner, repo.Name, enable, cancellationToken).NoSync();
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    public async ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, cancellationToken).NoSync();
+
+        if (repositories.IsNullOrEmpty())
+            return;
+
+        foreach (Repository repo in repositories)
+        {
+            try
+            {
+                await ToggleDiscussions(owner, repo.Name, enable, cancellationToken).NoSync();
             }
             catch
             {

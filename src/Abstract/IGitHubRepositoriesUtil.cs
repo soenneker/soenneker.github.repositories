@@ -69,9 +69,14 @@ public interface IGitHubRepositoriesUtil
     /// </summary>
     /// <param name="owner">The username or organization name of the repository owner.</param>
     /// <param name="name">The name of the repository.</param>
+    /// <param name="enable"></param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
-    ValueTask AllowAutoMerge(string owner, string name, CancellationToken cancellationToken = default);
+    ValueTask ToggleAutoMerge(string owner, string name, bool enable, CancellationToken cancellationToken = default);
 
-    ValueTask AllowAutoMergeOnAllRepos(string owner, CancellationToken cancellationToken = default);
+    ValueTask ToggleDiscussions(string owner, string name, bool enable, CancellationToken cancellationToken = default);
+
+    ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default);
+
+    ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default);
 }
