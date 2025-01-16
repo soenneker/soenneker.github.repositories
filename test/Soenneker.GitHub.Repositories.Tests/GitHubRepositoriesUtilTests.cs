@@ -17,6 +17,5 @@ public class GitHubRepositoriesUtilTests : FixturedUnitTest
     [Fact]
     public void Default()
     {
-
     }
 }

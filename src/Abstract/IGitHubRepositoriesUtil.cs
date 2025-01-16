@@ -29,9 +29,6 @@ public interface IGitHubRepositoriesUtil
     /// </summary>
     /// <param name="owner">The username or organization name of the repository owner.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A <see cref="ValueTask{IReadOnlyList{Repository}}"/> containing the list of repositories owned by the specified owner.
-    /// </returns>
     ValueTask<IReadOnlyList<Repository>> GetAllForOwner(string owner, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -59,9 +56,6 @@ public interface IGitHubRepositoriesUtil
     /// <param name="owner">The username or organization name of the repository owner.</param>
     /// <param name="name">The name of the repository.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A <see cref="ValueTask{bool}"/> indicating whether the repository exists.
-    /// </returns>
     ValueTask<bool> DoesExist(string owner, string name, CancellationToken cancellationToken = default);
 
     /// <summary>

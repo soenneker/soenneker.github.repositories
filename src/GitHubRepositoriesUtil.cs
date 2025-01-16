@@ -51,9 +51,30 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogDebug("Getting all repositories for owner ({owner})...", owner);
 
-        IReadOnlyList<Repository>? repositories = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.GetAllForUser(owner).NoSync();
+        GitHubClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
 
-        return repositories;
+        var allRepositories = new List<Repository>();
+        var page = 1;
+        IReadOnlyList<Repository> repositories;
+
+        do
+        {
+            var options = new ApiOptions
+            {
+                PageCount = 1,
+                PageSize = 100, // GitHub API default max page size
+                StartPage = page
+            };
+
+            repositories = await client.Repository.GetAllForUser(owner, options).NoSync();
+            allRepositories.AddRange(repositories);
+            page++;
+        }
+        while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
+
+        _logger.LogDebug("All repositories for owner ({owner}) have been retrieved", owner);
+
+        return allRepositories;
     }
 
     public async ValueTask ReplaceTopics(string owner, string name, List<string> topics, CancellationToken cancellationToken = default)
