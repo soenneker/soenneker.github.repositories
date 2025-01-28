@@ -2,6 +2,7 @@ using Octokit;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Threading;
+using System;
 
 namespace Soenneker.GitHub.Repositories.Abstract;
 
@@ -28,8 +29,10 @@ public interface IGitHubRepositoriesUtil
     /// Retrieves all repositories for a specified owner.
     /// </summary>
     /// <param name="owner">The username or organization name of the repository owner.</param>
+    /// <param name="endAt"></param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    ValueTask<IReadOnlyList<Repository>> GetAllForOwner(string owner, CancellationToken cancellationToken = default);
+    /// <param name="startAt"></param>
+    ValueTask<IReadOnlyList<Repository>> GetAllForOwner(string owner, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Replaces the topics of a GitHub repository.
@@ -70,7 +73,7 @@ public interface IGitHubRepositoriesUtil
 
     ValueTask ToggleDiscussions(string owner, string name, bool enable, CancellationToken cancellationToken = default);
 
-    ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default);
+    ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default);
 
-    ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default);
+    ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default);
 }

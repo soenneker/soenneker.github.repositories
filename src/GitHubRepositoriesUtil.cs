@@ -1,6 +1,8 @@
+using System;
 using Octokit;
 using Soenneker.GitHub.Repositories.Abstract;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Extensions.Logging;
@@ -29,17 +31,14 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Creating GitHub repository ({name})...", repository.Name);
 
-        Repository? result = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Create(repository).NoSync();
-
-        return result;
+        return await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Create(repository).NoSync();
     }
 
     public async ValueTask<Repository?> GetByName(string owner, string name, CancellationToken cancellationToken = default)
     {
         try
         {
-            Repository? result = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Get(owner, name).NoSync();
-            return result;
+            return await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Get(owner, name).NoSync();
         }
         catch (ApiException)
         {
@@ -47,7 +46,7 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         }
     }
 
-    public async ValueTask<IReadOnlyList<Repository>> GetAllForOwner(string owner, CancellationToken cancellationToken = default)
+    public async ValueTask<IReadOnlyList<Repository>> GetAllForOwner(string owner, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting all repositories for owner ({owner})...", owner);
 
@@ -67,10 +66,26 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             };
 
             repositories = await client.Repository.GetAllForUser(owner, options).NoSync();
-            allRepositories.AddRange(repositories);
+
+            if (startAt == null && endAt == null)
+            {
+                allRepositories.AddRange(repositories);
+            }
+            else if (startAt != null && endAt == null)
+            {
+                allRepositories.AddRange(repositories.Where(r => r.CreatedAt >= startAt));
+            }
+            else if (startAt == null && endAt != null)
+            {
+                allRepositories.AddRange(repositories.Where(r => r.CreatedAt <= endAt));
+            }
+            else
+            {
+                allRepositories.AddRange(repositories.Where(r => r.CreatedAt >= startAt && r.CreatedAt <= endAt));
+            }
+
             page++;
-        }
-        while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
+        } while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
 
         _logger.LogDebug("All repositories for owner ({owner}) have been retrieved", owner);
 
@@ -139,9 +154,9 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         Repository? _ = await (await _gitHubClientUtil.Get(cancellationToken).NoSync()).Repository.Edit(owner, name, update).NoSync();
     }
 
-    public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default)
+    public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, cancellationToken).NoSync();
+        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
         if (repositories.IsNullOrEmpty())
             return;
@@ -158,9 +173,9 @@ public class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         }
     }
 
-    public async ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, CancellationToken cancellationToken = default)
+    public async ValueTask ToggleDiscussionsOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, cancellationToken).NoSync();
+        IReadOnlyList<Repository> repositories = await GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
         if (repositories.IsNullOrEmpty())
             return;
