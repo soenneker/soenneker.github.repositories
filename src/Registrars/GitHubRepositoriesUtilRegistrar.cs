@@ -15,8 +15,8 @@ public static class GitHubRepositoriesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesUtilAsSingleton(this IServiceCollection services)
     {
-        services.AddGitHubClientUtilAsSingleton();
-        services.TryAddSingleton<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
+        services.AddGitHubClientUtilAsSingleton()
+                .TryAddSingleton<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
 
         return services;
     }
@@ -26,8 +26,8 @@ public static class GitHubRepositoriesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesUtilAsScoped(this IServiceCollection services)
     {
-        services.AddGitHubClientUtilAsSingleton();
-        services.TryAddScoped<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
+        services.AddGitHubClientUtilAsSingleton()
+                .TryAddScoped<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
 
         return services;
     }
