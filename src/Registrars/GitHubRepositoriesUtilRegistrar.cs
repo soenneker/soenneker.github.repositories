@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Soenneker.GitHub.Client.Registrars;
+using Soenneker.GitHub.ClientUtil.Registrars;
 using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories.Registrars;
@@ -15,7 +15,7 @@ public static class GitHubRepositoriesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesUtilAsSingleton(this IServiceCollection services)
     {
-        services.AddGitHubClientUtilAsSingleton()
+        services.AddGitHubOpenApiClientUtilAsSingleton()
                 .TryAddSingleton<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
 
         return services;
@@ -26,7 +26,7 @@ public static class GitHubRepositoriesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesUtilAsScoped(this IServiceCollection services)
     {
-        services.AddGitHubClientUtilAsSingleton()
+        services.AddGitHubOpenApiClientUtilAsSingleton()
                 .TryAddScoped<IGitHubRepositoriesUtil, GitHubRepositoriesUtil>();
 
         return services;
