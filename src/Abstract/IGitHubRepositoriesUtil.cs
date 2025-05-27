@@ -15,8 +15,8 @@ public interface IGitHubRepositoriesUtil
     /// <summary>
     /// Creates a new GitHub repository for the authenticated user.
     /// </summary>
-    ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false, bool autoInit = true,
-        bool? allowAutoMerge = null, bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null,
+    ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false, bool autoInit = true, bool? allowAutoMerge = null,
+        bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null,
         bool? deleteBranchOnMerge = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -38,8 +38,7 @@ public interface IGitHubRepositoriesUtil
     /// <summary>
     /// Deletes a repository if it exists.
     /// </summary>
-    ValueTask DeleteIfExists(IGitHubOpenApiClientUtil gitHubClientUtil, string owner, string repository,
-        CancellationToken cancellationToken = default);
+    ValueTask DeleteIfExists(string owner, string repository, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if a repository exists.

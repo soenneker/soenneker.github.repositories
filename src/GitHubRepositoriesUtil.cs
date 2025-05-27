@@ -101,9 +101,6 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         return allRepositories;
     }
 
-    /// <summary>
-    /// Replaces topics for a repository
-    /// </summary>
     public async ValueTask ReplaceTopics(string owner, string name, List<string> topics, CancellationToken cancellationToken = default)
     {
         if (topics?.Any() == true)
@@ -119,10 +116,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         }
     }
 
-    /// <summary>
-    /// Deletes a repository if it exists
-    /// </summary>
-    public async ValueTask DeleteIfExists(IGitHubOpenApiClientUtil gitHubClientUtil, string owner, string repository,
+    public async ValueTask DeleteIfExists(string owner, string repository,
         CancellationToken cancellationToken = default)
     {
         string name = repository.ToLowerInvariant();
@@ -130,22 +124,16 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         if (!await DoesExistAsync(owner, name, cancellationToken))
             return;
 
-        GitHubOpenApiClient client = await gitHubClientUtil.Get(cancellationToken);
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken);
         await client.Repos[owner][name].DeleteAsync(cancellationToken: cancellationToken);
     }
 
-    /// <summary>
-    /// Checks if a repository exists
-    /// </summary>
     public async ValueTask<bool> DoesExistAsync(string owner, string name, CancellationToken cancellationToken = default)
     {
         FullRepository? result = await GetByName(owner, name, cancellationToken);
         return result != null;
     }
 
-    /// <summary>
-    /// Toggles auto-merge for a repository
-    /// </summary>
     public async ValueTask ToggleAutoMergeAsync(string owner, string name, bool enable, CancellationToken cancellationToken = default)
     {
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken);
@@ -158,9 +146,6 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         await client.Repos[owner][name].PatchAsync(requestBody, cancellationToken: cancellationToken);
     }
 
-    /// <summary>
-    /// Toggles auto-merge for all repositories of an owner
-    /// </summary>
     public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null,
         CancellationToken cancellationToken = default)
     {
