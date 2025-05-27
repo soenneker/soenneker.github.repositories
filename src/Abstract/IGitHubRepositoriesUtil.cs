@@ -1,4 +1,3 @@
-using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient.Models;
 using System;
 using System.Collections.Generic;
