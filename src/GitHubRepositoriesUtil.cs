@@ -1,18 +1,20 @@
-using Microsoft.Extensions.Logging;
-using Soenneker.Extensions.String;
-using Soenneker.GitHub.ClientUtil.Abstract;
-using Soenneker.GitHub.OpenApiClient.Models;
-using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
-using Soenneker.GitHub.Repositories.Abstract;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient;
+using Soenneker.GitHub.OpenApiClient.Models;
+using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
 using Soenneker.GitHub.OpenApiClient.User.Repos;
+using Soenneker.GitHub.Repositories.Abstract;
+
+namespace Soenneker.GitHub.Repositories;
 
 ///<inheritdoc cref="IGitHubRepositoriesUtil"/>
 public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
@@ -26,9 +28,9 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         _gitHubClientUtil = gitHubClientUtil;
     }
 
-    public ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false,
-        bool? allowAutoMerge = null, bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null,
-        string? homepage = null, bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
+    public ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
+        bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null, string? homepage = null,
+        bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating user repository: {Name}, Private: {IsPrivate}", name, isPrivate);
 
@@ -59,8 +61,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     }
 
     public async ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false,
-        bool? allowAutoMerge = null, bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null,
-        string? homepage = null, bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
+        bool? allowAutoMerge = null, bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, string? homepage = null,
+        bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating org repository: {Org}/{Name}, Private: {IsPrivate}", org, name, isPrivate);
 
@@ -79,10 +81,11 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             HasProjects = hasProjects
         };
 
-        return await CreateForOrg(org, requestBody, cancellationToken);
+        return await CreateForOrg(org, requestBody, cancellationToken).NoSync();
     }
 
-    public async ValueTask<FullRepository> CreateForOrg(string org, Soenneker.GitHub.OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody request, CancellationToken cancellationToken = default)
+    public async ValueTask<FullRepository> CreateForOrg(string org, Soenneker.GitHub.OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody request,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
@@ -116,7 +119,9 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         do
         {
-            repositories = await client.Users[owner].Repos.GetAsync(requestConfiguration => requestConfiguration.QueryParameters.Page = page, cancellationToken).NoSync();
+            repositories = await client.Users[owner]
+                                       .Repos.GetAsync(requestConfiguration => requestConfiguration.QueryParameters.Page = page, cancellationToken)
+                                       .NoSync();
 
             IEnumerable<MinimalRepository> filtered = repositories;
 
@@ -212,6 +217,32 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             {
                 _logger.LogWarning(ex, "Failed to toggle auto-merge on: {Repo}", repo.Name);
             }
+        }
+    }
+
+    public async ValueTask<string> CreateUnique(string owner, string baseName, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
+        bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, string? homepage = null, bool? hasWiki = null,
+        bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
+    {
+        string candidate = baseName;
+        int counter = 1;
+
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            bool exists = await DoesExistAsync(owner, candidate, cancellationToken).NoSync();
+            if (!exists)
+            {
+                _logger.LogInformation("Creating unique org repo: {Org}/{Name}", owner, candidate);
+                await CreateForOrg(owner, candidate, description, isPrivate, allowAutoMerge, allowMergeCommit, allowRebaseMerge, allowSquashMerge, homepage,
+                        hasWiki, hasDownloads, hasProjects, cancellationToken)
+                    .NoSync();
+
+                return candidate;
+            }
+
+            candidate = $"{baseName}-{counter++}";
         }
     }
 }

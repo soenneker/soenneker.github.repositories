@@ -64,4 +64,25 @@ public interface IGitHubRepositoriesUtil
     /// </summary>
     ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new repository under the given organization with a unique name based on <paramref name="baseName"/>.
+    /// </summary>
+    /// <param name="owner">The organization to create the repo in.</param>
+    /// <param name="baseName">The base name to use, appending a numeric suffix if needed.</param>
+    /// <param name="description">Repository description.</param>
+    /// <param name="isPrivate">Whether the repo should be private.</param>
+    /// <param name="allowAutoMerge">Enable auto-merge.</param>
+    /// <param name="allowMergeCommit">Enable merge commits.</param>
+    /// <param name="allowRebaseMerge">Enable rebase merging.</param>
+    /// <param name="allowSquashMerge">Enable squash merging.</param>
+    /// <param name="homepage">Repository homepage URL.</param>
+    /// <param name="hasWiki">Enable the wiki.</param>
+    /// <param name="hasDownloads">Enable downloads.</param>
+    /// <param name="hasProjects">Enable projects.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The actual repository name that was created.</returns>
+    ValueTask<string> CreateUnique(string owner, string baseName, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
+        bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, string? homepage = null, bool? hasWiki = null,
+        bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default);
 }
