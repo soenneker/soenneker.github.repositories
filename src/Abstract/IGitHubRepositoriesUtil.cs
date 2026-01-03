@@ -36,7 +36,7 @@ public interface IGitHubRepositoriesUtil
     /// <summary>
     /// Gets all repositories for the specified owner, optionally filtered by creation date.
     /// </summary>
-    ValueTask<List<MinimalRepository>> GetAllForOwner(string owner, DateTime? startAt = null, DateTime? endAt = null,
+    ValueTask<List<MinimalRepository>> GetAllForOwner(string owner, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -62,7 +62,7 @@ public interface IGitHubRepositoriesUtil
     /// <summary>
     /// Enables or disables auto-merge for all repositories of an owner, optionally filtered by creation date.
     /// </summary>
-    ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null,
+    ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

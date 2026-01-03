@@ -56,8 +56,10 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     public async ValueTask<FullRepository> Create(ReposPostRequestBody request, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending user repository creation request for: {Repo}", request.Name);
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-        return await client.User.Repos.PostAsync(request, null, cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
+        return await client.User.Repos.PostAsync(request, null, cancellationToken)
+                           .NoSync();
     }
 
     public async ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false,
@@ -81,15 +83,19 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             HasProjects = hasProjects
         };
 
-        return await CreateForOrg(org, requestBody, cancellationToken).NoSync();
+        return await CreateForOrg(org, requestBody, cancellationToken)
+            .NoSync();
     }
 
     public async ValueTask<FullRepository> CreateForOrg(string org, Soenneker.GitHub.OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody request,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-        return await client.Orgs[org].Repos.PostAsync(request, null, cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
+        return await client.Orgs[org]
+                           .Repos.PostAsync(request, null, cancellationToken)
+                           .NoSync();
     }
 
     public async ValueTask<FullRepository?> GetByName(string owner, string name, CancellationToken cancellationToken = default)
@@ -97,8 +103,11 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         try
         {
             _logger.LogDebug("Fetching repository: {Owner}/{Name}", owner, name);
-            GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-            return await client.Repos[owner][name].GetAsync(cancellationToken: cancellationToken).NoSync();
+            GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                                .NoSync();
+            return await client.Repos[owner][name]
+                               .GetAsync(cancellationToken: cancellationToken)
+                               .NoSync();
         }
         catch (Exception ex)
         {
@@ -107,11 +116,12 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         }
     }
 
-    public async ValueTask<List<MinimalRepository>> GetAllForOwner(string owner, DateTime? startAt = null, DateTime? endAt = null,
+    public async ValueTask<List<MinimalRepository>> GetAllForOwner(string owner, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Getting all repositories for owner: {Owner}, Start: {Start}, End: {End}", owner, startAt, endAt);
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
 
         var allRepositories = new List<MinimalRepository>();
         var page = 1;
@@ -134,7 +144,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             allRepositories.AddRange(filtered);
 
             page++;
-        } while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
+        }
+        while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
 
         _logger.LogInformation("Fetched {Count} repositories for {Owner}", allRepositories.Count, owner);
         return allRepositories;
@@ -150,32 +161,40 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         _logger.LogInformation("Replacing topics for repository: {Owner}/{Name}", owner, name);
 
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
         var requestBody = new Soenneker.GitHub.OpenApiClient.Repos.Item.Item.Topics.TopicsPutRequestBody
         {
             Names = topics
         };
 
-        await client.Repos[owner][name].Topics.PutAsync(requestBody, cancellationToken: cancellationToken).NoSync();
+        await client.Repos[owner][name]
+                    .Topics.PutAsync(requestBody, cancellationToken: cancellationToken)
+                    .NoSync();
     }
 
     public async ValueTask DeleteIfExists(string owner, string repository, CancellationToken cancellationToken = default)
     {
         string name = repository.ToLowerInvariantFast();
-        if (!await DoesExistAsync(owner, name, cancellationToken).NoSync())
+        if (!await DoesExistAsync(owner, name, cancellationToken)
+                .NoSync())
         {
             _logger.LogInformation("Repository does not exist: {Owner}/{Name}", owner, name);
             return;
         }
 
         _logger.LogInformation("Deleting repository: {Owner}/{Name}", owner, name);
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-        await client.Repos[owner][name].DeleteAsync(cancellationToken: cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
+        await client.Repos[owner][name]
+                    .DeleteAsync(cancellationToken: cancellationToken)
+                    .NoSync();
     }
 
     public async ValueTask<bool> DoesExistAsync(string owner, string name, CancellationToken cancellationToken = default)
     {
-        FullRepository? result = await GetByName(owner, name, cancellationToken).NoSync();
+        FullRepository? result = await GetByName(owner, name, cancellationToken)
+            .NoSync();
         bool exists = result != null;
         _logger.LogDebug("Checked existence of {Owner}/{Name}: {Exists}", owner, name, exists);
         return exists;
@@ -185,21 +204,25 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Toggling auto-merge for {Owner}/{Name}: {Enabled}", owner, name, enable);
 
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
+                                                            .NoSync();
         var requestBody = new RepoPatchRequestBody
         {
             AllowAutoMerge = enable
         };
 
-        await client.Repos[owner][name].PatchAsync(requestBody, cancellationToken: cancellationToken).NoSync();
+        await client.Repos[owner][name]
+                    .PatchAsync(requestBody, cancellationToken: cancellationToken)
+                    .NoSync();
     }
 
-    public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTime? startAt = null, DateTime? endAt = null,
+    public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Toggling auto-merge on all repositories for {Owner}. Enable: {Enable}", owner, enable);
 
-        IReadOnlyList<MinimalRepository> repositories = await GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
+        IReadOnlyList<MinimalRepository> repositories = await GetAllForOwner(owner, startAt, endAt, cancellationToken)
+            .NoSync();
 
         if (repositories?.Any() != true)
         {
@@ -211,7 +234,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         {
             try
             {
-                await ToggleAutoMergeAsync(owner, repo.Name, enable, cancellationToken).NoSync();
+                await ToggleAutoMergeAsync(owner, repo.Name, enable, cancellationToken)
+                    .NoSync();
             }
             catch (Exception ex)
             {
@@ -231,7 +255,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            bool exists = await DoesExistAsync(owner, candidate, cancellationToken).NoSync();
+            bool exists = await DoesExistAsync(owner, candidate, cancellationToken)
+                .NoSync();
             if (!exists)
             {
                 _logger.LogInformation("Creating unique org repo: {Org}/{Name}", owner, candidate);
