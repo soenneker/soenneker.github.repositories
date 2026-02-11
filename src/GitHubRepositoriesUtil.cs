@@ -12,6 +12,7 @@ using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
 using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
 using Soenneker.GitHub.OpenApiClient.User.Repos;
+using Soenneker.GitHub.OpenApiClient.Users.Item.Repos;
 using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
@@ -125,27 +126,60 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         var allRepositories = new List<MinimalRepository>();
         var page = 1;
-        List<MinimalRepository> repositories;
+        const int perPage = 100;
+        bool useDateFilter = startAt != null || endAt != null;
+        bool sortDesc = useDateFilter;
 
-        do
+        bool done = false;
+
+        while (!cancellationToken.IsCancellationRequested && !done)
         {
-            repositories = await client.Users[owner]
-                                       .Repos.GetAsync(requestConfiguration => requestConfiguration.QueryParameters.Page = page, cancellationToken)
-                                       .NoSync();
+            List<MinimalRepository>? repositories = await client.Users[owner]
+                .Repos.GetAsync(requestConfiguration =>
+                {
+                    requestConfiguration.QueryParameters.Page = page;
+                    requestConfiguration.QueryParameters.PerPage = perPage;
+                    if (sortDesc)
+                    {
+                        requestConfiguration.QueryParameters.Sort = GetSortQueryParameterType.Created;
+                        requestConfiguration.QueryParameters.Direction = GetDirectionQueryParameterType.Desc;
+                    }
+                }, cancellationToken)
+                .NoSync();
 
-            IEnumerable<MinimalRepository> filtered = repositories;
+            if (repositories == null || repositories.Count == 0)
+                break;
 
-            if (startAt != null)
-                filtered = filtered.Where(r => r.CreatedAt >= startAt);
+            foreach (MinimalRepository r in repositories)
+            {
+                if (startAt != null && r.CreatedAt < startAt)
+                {
+                    if (sortDesc)
+                    {
+                        done = true;
+                        break;
+                    }
+                    continue;
+                }
 
-            if (endAt != null)
-                filtered = filtered.Where(r => r.CreatedAt <= endAt);
+                if (endAt != null && r.CreatedAt > endAt)
+                {
+                    if (!sortDesc)
+                    {
+                        done = true;
+                        break;
+                    }
+                    continue;
+                }
 
-            allRepositories.AddRange(filtered);
+                allRepositories.Add(r);
+            }
+
+            if (sortDesc && (repositories.Count < perPage || (startAt != null && repositories.Count > 0 && repositories[^1].CreatedAt < startAt)))
+                break;
 
             page++;
         }
-        while (repositories.Count > 0 && !cancellationToken.IsCancellationRequested);
 
         _logger.LogInformation("Fetched {Count} repositories for {Owner}", allRepositories.Count, owner);
         return allRepositories;
