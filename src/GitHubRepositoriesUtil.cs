@@ -12,7 +12,6 @@ using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
 using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
 using Soenneker.GitHub.OpenApiClient.User.Repos;
-using Soenneker.GitHub.OpenApiClient.Users.Item.Repos;
 using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
@@ -128,24 +127,26 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         var page = 1;
         const int perPage = 100;
         bool useDateFilter = startAt != null || endAt != null;
-        bool sortDesc = useDateFilter;
 
-        bool done = false;
+        var done = false;
 
         while (!cancellationToken.IsCancellationRequested && !done)
         {
+            int localPage = page;
+
             List<MinimalRepository>? repositories = await client.Users[owner]
-                .Repos.GetAsync(requestConfiguration =>
-                {
-                    requestConfiguration.QueryParameters.Page = page;
-                    requestConfiguration.QueryParameters.PerPage = perPage;
-                    if (sortDesc)
-                    {
-                        requestConfiguration.QueryParameters.Sort = Soenneker.GitHub.OpenApiClient.Users.Item.Repos.GetSortQueryParameterType.Created;
-                        requestConfiguration.QueryParameters.Direction = Soenneker.GitHub.OpenApiClient.Users.Item.Repos.GetDirectionQueryParameterType.Desc;
-                    }
-                }, cancellationToken)
-                .NoSync();
+                                                                .Repos.GetAsync(requestConfiguration =>
+                                                                {
+                                                                    requestConfiguration.QueryParameters.Page = localPage;
+                                                                    requestConfiguration.QueryParameters.PerPage = perPage;
+
+                                                                    if (useDateFilter)
+                                                                    {
+                                                                        requestConfiguration.QueryParameters.Sort = OpenApiClient.Users.Item.Repos.GetSortQueryParameterType.Created;
+                                                                        requestConfiguration.QueryParameters.Direction = OpenApiClient.Users.Item.Repos.GetDirectionQueryParameterType.Desc;
+                                                                    }
+                                                                }, cancellationToken)
+                                                                .NoSync();
 
             if (repositories == null || repositories.Count == 0)
                 break;
@@ -154,7 +155,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             {
                 if (startAt != null && r.CreatedAt < startAt)
                 {
-                    if (sortDesc)
+                    if (useDateFilter)
                     {
                         done = true;
                         break;
@@ -164,7 +165,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
                 if (endAt != null && r.CreatedAt > endAt)
                 {
-                    if (!sortDesc)
+                    if (!useDateFilter)
                     {
                         done = true;
                         break;
@@ -175,7 +176,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                 allRepositories.Add(r);
             }
 
-            if (sortDesc && (repositories.Count < perPage || (startAt != null && repositories.Count > 0 && repositories[^1].CreatedAt < startAt)))
+            if (useDateFilter && (repositories.Count < perPage || (startAt != null && repositories.Count > 0 && repositories[^1].CreatedAt < startAt)))
                 break;
 
             page++;
@@ -283,7 +284,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default)
     {
         string candidate = baseName;
-        int counter = 1;
+        var counter = 1;
 
         while (true)
         {
