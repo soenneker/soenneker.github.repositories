@@ -141,8 +141,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                     requestConfiguration.QueryParameters.PerPage = perPage;
                     if (sortDesc)
                     {
-                        requestConfiguration.QueryParameters.Sort = GetSortQueryParameterType.Created;
-                        requestConfiguration.QueryParameters.Direction = GetDirectionQueryParameterType.Desc;
+                        requestConfiguration.QueryParameters.Sort = Soenneker.GitHub.OpenApiClient.Users.Item.Repos.GetSortQueryParameterType.Created;
+                        requestConfiguration.QueryParameters.Direction = Soenneker.GitHub.OpenApiClient.Users.Item.Repos.GetDirectionQueryParameterType.Desc;
                     }
                 }, cancellationToken)
                 .NoSync();
