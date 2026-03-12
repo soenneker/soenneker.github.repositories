@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Soenneker.GitHub.Repositories.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.GitHub.Repositories\Soenneker.GitHub.Repositories.csproj" />
     </ItemGroup>
 
     <ItemGroup>
