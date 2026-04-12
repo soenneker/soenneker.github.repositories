@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Soenneker.GitHub.OpenApiClient.User.Repos;
 
 namespace Soenneker.GitHub.Repositories.Abstract;
 
@@ -19,13 +18,13 @@ public interface IGitHubRepositoriesUtil
         bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null, string? homepage = null,
         bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default);
 
-    ValueTask<FullRepository> Create(ReposPostRequestBody request, CancellationToken cancellationToken = default);
+    ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUser request, CancellationToken cancellationToken = default);
 
     ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
         bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, string? homepage = null, bool? hasWiki = null,
         bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default);
 
-    ValueTask<FullRepository> CreateForOrg(string org, OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody request,
+    ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request,
         CancellationToken cancellationToken = default);
 
     /// <summary>

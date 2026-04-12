@@ -11,7 +11,6 @@ using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
 using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
-using Soenneker.GitHub.OpenApiClient.User.Repos;
 using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
@@ -34,7 +33,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Creating user repository: {Name}, Private: {IsPrivate}", name, isPrivate);
 
-        var requestBody = new ReposPostRequestBody
+        var requestBody = new ReposCreateForAuthenticatedUser
         {
             Name = name,
             Description = description,
@@ -53,7 +52,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         return Create(requestBody, cancellationToken);
     }
 
-    public async ValueTask<FullRepository> Create(ReposPostRequestBody request, CancellationToken cancellationToken = default)
+    public async ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUser request, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending user repository creation request for: {Repo}", request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
@@ -68,7 +67,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Creating org repository: {Org}/{Name}, Private: {IsPrivate}", org, name, isPrivate);
 
-        var requestBody = new Soenneker.GitHub.OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody
+        var requestBody = new ReposCreateInOrg
         {
             Name = name,
             Description = description,
@@ -87,7 +86,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             .NoSync();
     }
 
-    public async ValueTask<FullRepository> CreateForOrg(string org, Soenneker.GitHub.OpenApiClient.Orgs.Item.Repos.ReposPostRequestBody request,
+    public async ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
@@ -198,7 +197,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        var requestBody = new Soenneker.GitHub.OpenApiClient.Repos.Item.Item.Topics.TopicsPutRequestBody
+        var requestBody = new ReposReplaceAllTopics
         {
             Names = topics
         };
@@ -241,7 +240,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        var requestBody = new RepoPatchRequestBody
+        var requestBody = new ReposUpdate
         {
             AllowAutoMerge = enable
         };
