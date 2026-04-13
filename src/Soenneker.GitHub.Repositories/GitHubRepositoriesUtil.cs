@@ -10,7 +10,6 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
-using Soenneker.GitHub.OpenApiClient.Repos.Item.Item;
 using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
@@ -86,8 +85,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             .NoSync();
     }
 
-    public async ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
@@ -141,8 +139,10 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
                                                                     if (useDateFilter)
                                                                     {
-                                                                        requestConfiguration.QueryParameters.Sort = OpenApiClient.Users.Item.Repos.GetSortQueryParameterType.Created;
-                                                                        requestConfiguration.QueryParameters.Direction = OpenApiClient.Users.Item.Repos.GetDirectionQueryParameterType.Desc;
+                                                                        requestConfiguration.QueryParameters.Sort = OpenApiClient.Users.Item.Repos
+                                                                            .GetSortQueryParameterType.Created;
+                                                                        requestConfiguration.QueryParameters.Direction = OpenApiClient.Users.Item.Repos
+                                                                            .GetDirectionQueryParameterType.Desc;
                                                                     }
                                                                 }, cancellationToken)
                                                                 .NoSync();
@@ -159,6 +159,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                         done = true;
                         break;
                     }
+
                     continue;
                 }
 
@@ -169,6 +170,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                         done = true;
                         break;
                     }
+
                     continue;
                 }
 
