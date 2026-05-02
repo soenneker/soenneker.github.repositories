@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -117,12 +118,33 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Getting all repositories for owner: {Owner}, Start: {Start}, End: {End}", owner, startAt, endAt);
+
+        var allRepositories = new List<MinimalRepository>();
+
+        await foreach (MinimalRepository repository in GetAllForOwnerIncrementally(owner, startAt, endAt, cancellationToken: cancellationToken)
+                           .WithCancellation(cancellationToken))
+        {
+            allRepositories.Add(repository);
+        }
+
+        _logger.LogInformation("Fetched {Count} repositories for {Owner}", allRepositories.Count, owner);
+        return allRepositories;
+    }
+
+    public async IAsyncEnumerable<MinimalRepository> GetAllForOwnerIncrementally(string owner, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
+        int pageSize = 100, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+
+        if (pageSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "Page size must be greater than 0.");
+
+        _logger.LogInformation("Getting repositories incrementally for owner: {Owner}, Start: {Start}, End: {End}", owner, startAt, endAt);
+
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
 
-        var allRepositories = new List<MinimalRepository>();
         var page = 1;
-        const int perPage = 100;
         bool useDateFilter = startAt != null || endAt != null;
 
         var done = false;
@@ -135,7 +157,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                                                                 .Repos.GetAsync(requestConfiguration =>
                                                                 {
                                                                     requestConfiguration.QueryParameters.Page = localPage;
-                                                                    requestConfiguration.QueryParameters.PerPage = perPage;
+                                                                    requestConfiguration.QueryParameters.PerPage = pageSize;
 
                                                                     if (useDateFilter)
                                                                     {
@@ -174,17 +196,17 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                     continue;
                 }
 
-                allRepositories.Add(r);
+                yield return r;
             }
 
-            if (useDateFilter && (repositories.Count < perPage || (startAt != null && repositories.Count > 0 && repositories[^1].CreatedAt < startAt)))
+            if (repositories.Count < pageSize)
+                break;
+
+            if (useDateFilter && startAt != null && repositories[^1].CreatedAt < startAt)
                 break;
 
             page++;
         }
-
-        _logger.LogInformation("Fetched {Count} repositories for {Owner}", allRepositories.Count, owner);
-        return allRepositories;
     }
 
     public async ValueTask ReplaceTopics(string owner, string name, List<string> topics, CancellationToken cancellationToken = default)

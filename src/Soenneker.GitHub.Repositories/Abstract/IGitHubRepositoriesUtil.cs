@@ -39,6 +39,12 @@ public interface IGitHubRepositoriesUtil
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets repositories for the specified owner incrementally, yielding repositories as each page is fetched.
+    /// </summary>
+    IAsyncEnumerable<MinimalRepository> GetAllForOwnerIncrementally(string owner, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
+        int pageSize = 100, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Replaces the topics of a repository.
     /// </summary>
     ValueTask ReplaceTopics(string owner, string name, List<string> topics, CancellationToken cancellationToken = default);
