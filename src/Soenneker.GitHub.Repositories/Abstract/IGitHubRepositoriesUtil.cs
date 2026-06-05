@@ -18,12 +18,42 @@ public interface IGitHubRepositoriesUtil
         bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, bool? hasDiscussions = null, string? homepage = null,
         bool? hasWiki = null, bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executes the create operation.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUser request, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Creates for org.
+    /// </summary>
+    /// <param name="org">The org.</param>
+    /// <param name="name">The name.</param>
+    /// <param name="description">The description.</param>
+    /// <param name="isPrivate">The is private.</param>
+    /// <param name="allowAutoMerge">The allow auto merge.</param>
+    /// <param name="allowMergeCommit">The allow merge commit.</param>
+    /// <param name="allowRebaseMerge">The allow rebase merge.</param>
+    /// <param name="allowSquashMerge">The allow squash merge.</param>
+    /// <param name="homepage">The homepage.</param>
+    /// <param name="hasWiki">The has wiki.</param>
+    /// <param name="hasDownloads">The has downloads.</param>
+    /// <param name="hasProjects">The has projects.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
         bool? allowMergeCommit = null, bool? allowRebaseMerge = null, bool? allowSquashMerge = null, string? homepage = null, bool? hasWiki = null,
         bool? hasDownloads = null, bool? hasProjects = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Creates for org.
+    /// </summary>
+    /// <param name="org">The org.</param>
+    /// <param name="request">The request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task containing the result of the operation.</returns>
     ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request,
         CancellationToken cancellationToken = default);
 
