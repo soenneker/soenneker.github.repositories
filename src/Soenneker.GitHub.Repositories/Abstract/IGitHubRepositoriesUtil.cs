@@ -24,7 +24,7 @@ public interface IGitHubRepositoriesUtil
     /// <param name="request">The request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task containing the result of the operation.</returns>
-    ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUser request, CancellationToken cancellationToken = default);
+    ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUserRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates for org.
@@ -54,7 +54,7 @@ public interface IGitHubRepositoriesUtil
     /// <param name="request">The request.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A task containing the result of the operation.</returns>
-    ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request,
+    ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrgRequest request,
         CancellationToken cancellationToken = default);
 
     /// <summary>

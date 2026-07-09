@@ -33,7 +33,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Creating user repository: {Name}, Private: {IsPrivate}", name, isPrivate);
 
-        var requestBody = new ReposCreateForAuthenticatedUser
+        var requestBody = new ReposCreateForAuthenticatedUserRequest
         {
             Name = name,
             Description = description,
@@ -52,13 +52,13 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         return Create(requestBody, cancellationToken);
     }
 
-    public async ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUser request, CancellationToken cancellationToken = default)
+    public async ValueTask<FullRepository> Create(ReposCreateForAuthenticatedUserRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending user repository creation request for: {Repo}", request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        return await client.User.Repos.PostAsync(request, null, cancellationToken)
-                           .NoSync();
+        return (await client.User.Repos.PostAsync(request, null, cancellationToken)
+                            .NoSync())!;
     }
 
     public async ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false,
@@ -67,7 +67,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         _logger.LogInformation("Creating org repository: {Org}/{Name}, Private: {IsPrivate}", org, name, isPrivate);
 
-        var requestBody = new ReposCreateInOrg
+        var requestBody = new ReposCreateInOrgRequest
         {
             Name = name,
             Description = description,
@@ -86,14 +86,14 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             .NoSync();
     }
 
-    public async ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrg request, CancellationToken cancellationToken = default)
+    public async ValueTask<FullRepository> CreateForOrg(string org, ReposCreateInOrgRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        return await client.Orgs[org]
-                           .Repos.PostAsync(request, null, cancellationToken)
-                           .NoSync();
+        return (await client.Orgs[org]
+                            .Repos.PostAsync(request, null, cancellationToken)
+                            .NoSync())!;
     }
 
     public async ValueTask<FullRepository?> GetByName(string owner, string name, CancellationToken cancellationToken = default)
@@ -161,10 +161,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
                                                                     if (useDateFilter)
                                                                     {
-                                                                        requestConfiguration.QueryParameters.Sort = OpenApiClient.Users.Item.Repos
-                                                                            .GetSortQueryParameterType.Created;
-                                                                        requestConfiguration.QueryParameters.Direction = OpenApiClient.Users.Item.Repos
-                                                                            .GetDirectionQueryParameterType.Desc;
+                                                                        requestConfiguration.QueryParameters.Sort = ReposListForUserSortParameter.Created;
+                                                                        requestConfiguration.QueryParameters.Direction = ReposListForUserDirectionParameter.Desc;
                                                                     }
                                                                 }, cancellationToken)
                                                                 .NoSync();
@@ -221,7 +219,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        var requestBody = new ReposReplaceAllTopics
+        var requestBody = new ReposReplaceAllTopicsRequest
         {
             Names = topics
         };
@@ -264,7 +262,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        var requestBody = new ReposUpdate
+        var requestBody = new ReposUpdateRequest
         {
             AllowAutoMerge = enable
         };
@@ -292,6 +290,9 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         {
             try
             {
+                if (repo.Name == null)
+                    continue;
+
                 await ToggleAutoMergeAsync(owner, repo.Name, enable, cancellationToken)
                     .NoSync();
             }
