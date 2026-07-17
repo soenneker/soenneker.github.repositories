@@ -45,6 +45,6 @@
 
     <ItemGroup>
         <PackageReference Include="Soenneker.Extensions.Enumerable.String" Version="4.0.1389" />
-        <PackageReference Include="Soenneker.GitHub.ClientUtil" Version="4.0.536" />
+        <PackageReference Include="Soenneker.GitHub.ClientUtil" Version="4.0.540" />
     </ItemGroup>
 </Project>
