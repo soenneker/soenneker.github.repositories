@@ -87,12 +87,17 @@ public interface IGitHubRepositoriesUtil
     /// <summary>
     /// Checks if a repository exists.
     /// </summary>
-    ValueTask<bool> DoesExistAsync(string owner, string name, CancellationToken cancellationToken = default);
+    ValueTask<bool> DoesExist(string owner, string name, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Enables or disables auto-merge for a repository.
     /// </summary>
-    ValueTask ToggleAutoMergeAsync(string owner, string name, bool enable, CancellationToken cancellationToken = default);
+    ValueTask ToggleAutoMerge(string owner, string name, bool enable, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Enables or disables the Sponsor button for a repository.
+    /// </summary>
+    ValueTask ToggleSponsorships(string owner, string name, bool enable, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Enables or disables auto-merge for all repositories of an owner, optionally filtered by creation date.

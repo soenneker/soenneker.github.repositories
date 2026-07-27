@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.GitHub.Client.Http.Abstract;
 using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
@@ -20,11 +26,16 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 {
     private readonly ILogger<GitHubRepositoriesUtil> _logger;
     private readonly IGitHubOpenApiClientUtil _gitHubClientUtil;
+    private readonly IGitHubHttpClient _gitHubHttpClient;
+    private readonly IConfiguration _config;
 
-    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil)
+    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil, IGitHubHttpClient gitHubHttpClient,
+        IConfiguration config)
     {
         _logger = logger;
         _gitHubClientUtil = gitHubClientUtil;
+        _gitHubHttpClient = gitHubHttpClient;
+        _config = config;
     }
 
     public ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
@@ -232,7 +243,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     public async ValueTask DeleteIfExists(string owner, string repository, CancellationToken cancellationToken = default)
     {
         string name = repository.ToLowerInvariantFast();
-        if (!await DoesExistAsync(owner, name, cancellationToken)
+        if (!await DoesExist(owner, name, cancellationToken)
                 .NoSync())
         {
             _logger.LogInformation("Repository does not exist: {Owner}/{Name}", owner, name);
@@ -247,7 +258,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                     .NoSync();
     }
 
-    public async ValueTask<bool> DoesExistAsync(string owner, string name, CancellationToken cancellationToken = default)
+    public async ValueTask<bool> DoesExist(string owner, string name, CancellationToken cancellationToken = default)
     {
         FullRepository? result = await GetByName(owner, name, cancellationToken)
             .NoSync();
@@ -256,7 +267,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         return exists;
     }
 
-    public async ValueTask ToggleAutoMergeAsync(string owner, string name, bool enable, CancellationToken cancellationToken = default)
+    public async ValueTask ToggleAutoMerge(string owner, string name, bool enable, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Toggling auto-merge for {Owner}/{Name}: {Enabled}", owner, name, enable);
 
@@ -270,6 +281,52 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         await client.Repos[owner][name]
                     .PatchAsync(requestBody, cancellationToken: cancellationToken)
                     .NoSync();
+    }
+
+    public async ValueTask ToggleSponsorships(string owner, string name, bool enable, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Toggling sponsorships for {Owner}/{Name}: {Enabled}", owner, name, enable);
+
+        FullRepository? repository = await GetByName(owner, name, cancellationToken)
+            .NoSync();
+        string repositoryId = repository?.NodeId ??
+                              throw new InvalidOperationException($"GitHub did not return a node ID for {owner}/{name}.");
+
+        var payload = new
+        {
+            query =
+                "mutation($repositoryId:ID!,$enabled:Boolean!){updateRepository(input:{repositoryId:$repositoryId,hasSponsorshipsEnabled:$enabled}){repository{hasSponsorshipsEnabled}}}",
+            variables = new {repositoryId, enabled = enable}
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config["GH:Token"]);
+        request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
+        request.Headers.Add("User-Agent", "soenneker.github.repositories");
+        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+        HttpClient client = await _gitHubHttpClient.Get(cancellationToken)
+                                                   .NoSync();
+        using HttpResponseMessage response = await client.SendAsync(request, cancellationToken)
+                                                         .NoSync();
+        response.EnsureSuccessStatusCode();
+
+        string json = await response.Content.ReadAsStringAsync(cancellationToken)
+                                            .NoSync();
+        using JsonDocument document = JsonDocument.Parse(json);
+
+        if (document.RootElement.TryGetProperty("errors", out JsonElement errors) && errors.GetArrayLength() > 0)
+            throw new InvalidOperationException($"GitHub GraphQL request failed: {errors}");
+
+        bool actual = document.RootElement.GetProperty("data")
+                                     .GetProperty("updateRepository")
+                                     .GetProperty("repository")
+                                     .GetProperty("hasSponsorshipsEnabled")
+                                     .GetBoolean();
+
+        if (actual != enable)
+            throw new InvalidOperationException($"GitHub did not set sponsorships to {enable} for {owner}/{name}.");
     }
 
     public async ValueTask ToggleAutoMergeOnAllRepos(string owner, bool enable, DateTimeOffset? startAt = null, DateTimeOffset? endAt = null,
@@ -293,7 +350,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                 if (repo.Name == null)
                     continue;
 
-                await ToggleAutoMergeAsync(owner, repo.Name, enable, cancellationToken)
+                await ToggleAutoMerge(owner, repo.Name, enable, cancellationToken)
                     .NoSync();
             }
             catch (Exception ex)
@@ -314,7 +371,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            bool exists = await DoesExistAsync(owner, candidate, cancellationToken)
+            bool exists = await DoesExist(owner, candidate, cancellationToken)
                 .NoSync();
             if (!exists)
             {
