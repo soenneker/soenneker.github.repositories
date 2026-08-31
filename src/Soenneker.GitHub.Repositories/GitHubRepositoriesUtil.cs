@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
@@ -21,21 +20,17 @@ using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
 
-///<inheritdoc cref="IGitHubRepositoriesUtil"/>
 public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 {
     private readonly ILogger<GitHubRepositoriesUtil> _logger;
     private readonly IGitHubOpenApiClientUtil _gitHubClientUtil;
     private readonly IGitHubHttpClient _gitHubHttpClient;
-    private readonly IConfiguration _config;
 
-    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil, IGitHubHttpClient gitHubHttpClient,
-        IConfiguration config)
+    public GitHubRepositoriesUtil(ILogger<GitHubRepositoriesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil, IGitHubHttpClient gitHubHttpClient)
     {
         _logger = logger;
         _gitHubClientUtil = gitHubClientUtil;
         _gitHubHttpClient = gitHubHttpClient;
-        _config = config;
     }
 
     public ValueTask<FullRepository> Create(string name, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
@@ -68,8 +63,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         _logger.LogDebug("Sending user repository creation request for: {Repo}", request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        return (await client.User.Repos.PostAsync(request, null, cancellationToken)
-                            .NoSync())!;
+        return await client.User.Repos.PostAsync(request, null, cancellationToken)
+                           .NoSync() ?? throw new InvalidOperationException("GitHub returned no repository after creating it.");
     }
 
     public async ValueTask<FullRepository> CreateForOrg(string org, string name, string? description = null, bool isPrivate = false,
@@ -102,9 +97,9 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         _logger.LogDebug("Sending org repository creation request for: {Org}/{Repo}", org, request.Name);
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                             .NoSync();
-        return (await client.Orgs[org]
-                            .Repos.PostAsync(request, null, cancellationToken)
-                            .NoSync())!;
+        return await client.Orgs[org]
+                           .Repos.PostAsync(request, null, cancellationToken)
+                           .NoSync() ?? throw new InvalidOperationException($"GitHub returned no repository after creating {org}/{request.Name}.");
     }
 
     public async ValueTask<FullRepository?> GetByName(string owner, string name, CancellationToken cancellationToken = default)
@@ -118,9 +113,9 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                                .GetAsync(cancellationToken: cancellationToken)
                                .NoSync();
         }
-        catch (Exception ex)
+        catch (BasicError ex) when (ex.ResponseStatusCode == 404)
         {
-            _logger.LogWarning(ex, "Repository not found or failed to fetch: {Owner}/{Name}", owner, name);
+            _logger.LogDebug("Repository not found: {Owner}/{Name}", owner, name);
             return null;
         }
     }
@@ -220,12 +215,6 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
     public async ValueTask ReplaceTopics(string owner, string name, List<string> topics, CancellationToken cancellationToken = default)
     {
-        if (topics?.Any() != true)
-        {
-            _logger.LogWarning("No topics provided for replacement in: {Owner}/{Name}", owner, name);
-            return;
-        }
-
         _logger.LogInformation("Replacing topics for repository: {Owner}/{Name}", owner, name);
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
@@ -301,7 +290,6 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _config["GH:Token"]);
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.Add("User-Agent", "soenneker.github.repositories");
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
@@ -343,6 +331,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             return;
         }
 
+        var failures = new List<Exception>();
+
         foreach (MinimalRepository repo in repositories)
         {
             try
@@ -356,8 +346,12 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to toggle auto-merge on: {Repo}", repo.Name);
+                failures.Add(ex);
             }
         }
+
+        if (failures.Count > 0)
+            throw new AggregateException($"Failed to update auto-merge on {failures.Count} repository/repositories for {owner}.", failures);
     }
 
     public async ValueTask<string> CreateUnique(string owner, string baseName, string? description = null, bool isPrivate = false, bool? allowAutoMerge = null,
