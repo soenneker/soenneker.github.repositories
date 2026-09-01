@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Object;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.Client.Http.Abstract;
@@ -292,7 +293,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.Add("User-Agent", "soenneker.github.repositories");
-        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        request.Content = payload.ToHttpContent();
 
         HttpClient client = await _gitHubHttpClient.Get(cancellationToken)
                                                    .NoSync();
