@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
@@ -327,7 +326,7 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         IReadOnlyList<MinimalRepository> repositories = await GetAllForOwner(owner, startAt, endAt, cancellationToken)
             .NoSync();
 
-        if (repositories?.Any() != true)
+        if (repositories.Count == 0)
         {
             _logger.LogWarning("No repositories found for auto-merge toggle: {Owner}", owner);
             return;
