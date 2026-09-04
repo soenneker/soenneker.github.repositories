@@ -21,6 +21,7 @@ using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
 
+/// <inheritdoc cref="IGitHubRepositoriesUtil" />
 public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 {
     private readonly ILogger<GitHubRepositoriesUtil> _logger;
