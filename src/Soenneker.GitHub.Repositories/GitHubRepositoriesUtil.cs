@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +19,6 @@ using Soenneker.GitHub.Repositories.Abstract;
 
 namespace Soenneker.GitHub.Repositories;
 
-/// <inheritdoc cref="IGitHubRepositoriesUtil" />
 public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
 {
     private readonly ILogger<GitHubRepositoriesUtil> _logger;
@@ -282,18 +280,18 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         string repositoryId = repository?.NodeId ??
                               throw new InvalidOperationException($"GitHub did not return a node ID for {owner}/{name}.");
 
-        var payload = new
+        var payload = new SponsorshipsRequest
         {
-            query =
+            Query =
                 "mutation($repositoryId:ID!,$enabled:Boolean!){updateRepository(input:{repositoryId:$repositoryId,hasSponsorshipsEnabled:$enabled}){repository{hasSponsorshipsEnabled}}}",
-            variables = new {repositoryId, enabled = enable}
+            Variables = new SponsorshipsVariables { RepositoryId = repositoryId, Enabled = enable }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "graphql");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         request.Headers.Add("X-GitHub-Api-Version", "2022-11-28");
         request.Headers.Add("User-Agent", "soenneker.github.repositories");
-        request.Content = payload.ToHttpContent();
+        request.Content = payload.ToHttpContent(RepositoriesJsonContext.Default.SponsorshipsRequest);
 
         HttpClient client = await _gitHubHttpClient.Get(cancellationToken)
                                                    .NoSync();
