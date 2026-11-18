@@ -105,7 +105,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
     {
         try
         {
-            _logger.LogDebug("Fetching repository: {Owner}/{Name}", owner, name);
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Fetching repository: {Owner}/{Name}", owner, name);
             GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken)
                                                                 .NoSync();
             return await client.Repos[owner][name]
@@ -114,7 +115,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         }
         catch (BasicError ex) when (ex.ResponseStatusCode == 404)
         {
-            _logger.LogDebug("Repository not found: {Owner}/{Name}", owner, name);
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Repository not found: {Owner}/{Name}", owner, name);
             return null;
         }
     }
@@ -251,7 +253,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
         FullRepository? result = await GetByName(owner, name, cancellationToken)
             .NoSync();
         bool exists = result != null;
-        _logger.LogDebug("Checked existence of {Owner}/{Name}: {Exists}", owner, name, exists);
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Checked existence of {Owner}/{Name}: {Exists}", owner, name, exists);
         return exists;
     }
 
@@ -368,7 +371,8 @@ public sealed class GitHubRepositoriesUtil : IGitHubRepositoriesUtil
                 .NoSync();
             if (!exists)
             {
-                _logger.LogInformation("Creating unique org repo: {Org}/{Name}", owner, candidate);
+                if (_logger.IsEnabled(LogLevel.Information))
+                    _logger.LogInformation("Creating unique org repo: {Org}/{Name}", owner, candidate);
                 await CreateForOrg(owner, candidate, description, isPrivate, allowAutoMerge, allowMergeCommit, allowRebaseMerge, allowSquashMerge, homepage,
                         hasWiki, hasDownloads, hasProjects, cancellationToken)
                     .NoSync();
